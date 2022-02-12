@@ -8,10 +8,11 @@
 # PRODUCTION
 
 # In case need to fresh build image
-#docker build -f Dockerfile.production -t containername:prod .
+docker build -f Dockerfile.production -t containername:prod .
 
 # In case don't need to rebuild image
-docker commit containername containername:prod
+#docker commit containername containername-image
+#docker build -f Dockerfile.production2 -t containername:prod .
 
 # Tag and upload to Google Container Registry
 docker tag containername:prod asia.gcr.io/wudemo2022/containername

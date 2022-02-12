@@ -1,8 +1,8 @@
-FROM python:3.8-slim
+FROM containername-image
 WORKDIR /code
 COPY ./code/* ./
-# RUN apt install -y build-essential
-# RUN apt install -y libmariadbclient-dev
+RUN apt install -y build-essential
+RUN apt install -y libmariadbclient-dev
 RUN pip install -U pip \
     && pip install -r requirements.txt
 EXPOSE 8080
