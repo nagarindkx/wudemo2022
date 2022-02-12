@@ -1,0 +1,377 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<br>
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{pathurl}}/view_list">หน้าหลัก</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ tbname }}</li>
+  </ol>
+</nav>
+
+<div class="mb-3">
+  <h1 align="center">{{ tbname }}</h1>
+</div>
+
+<div class="card shadow mb-3">
+  <div class="card-body">
+    <center>
+      <div id='loader' style='display: none;width: 300px;' class="my-3">
+        <div class="spinner-grow text-primary" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-secondary" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-success" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-danger" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-warning" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-info" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </div>
+    </center>
+
+    <div class="table-responsive" id="div_table_list">
+      <table id="table_list" class="display">
+        <thead>
+
+        </thead>
+        <tbody>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="descriptionModal" tabindex="-1" role="dialog" aria-labelledby="descriptionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="descriptionModalLabel">Description (<span class="fw-bold" id="field_name_des"></span>)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+
+          <div class="row"> 
+            <div class="col-lg-6">     
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Description</h6>
+                </div>
+                <div class="card-body">
+
+                <div class="row">      
+                  <div class="col-12">
+                    <input type="hidden" id="his_table" name="his_table">
+                    <input type="hidden" id="field_name" name="field_name">
+                    <label class="col-form-label">คำอธิบาย :</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>  
+            </div> 
+
+            <div class="col-lg-6">
+
+              <div class="card shadow mb-4">
+                  <div class="card-header py-3">
+                      <h6 class="m-0 font-weight-bold text-primary">Data Dictionary</h6>
+                  </div>
+                  <div class="card-body">
+                    <div class="row mb-3">
+
+                      <div class="col-5 mb-1">
+                        <label>Key :</label>
+                      </div>
+                      <div class="col-7 mb-1">
+                        <label>Value :</label>
+                      </div>
+
+                      <div class="col-5">
+                        <input type="text" class="form-control" id="key_col" name="key_col">
+                      </div>
+                      <div class="col-5">
+                        <input type="text" class="form-control" id="val_col" name="val_col">
+                      </div>
+                      <div class="col-2">
+                        <a class="btn btn-success" onclick="addDataDict()">เพิ่ม</a>
+                      </div>
+                      
+                    </div>
+
+                    <table class='table table-bordered' style='width:100%;' id="appoint_logs">
+                      <thead >
+                        <tr>
+                          <th style="display: none;">id</th>
+                          <th> Key</th>
+                          <th >Value</th>                                                      
+                          <th ></th>                     
+                        </tr>
+                      </thead>
+                      <tbody>
+                                                                                                                                              
+                      </tbody>
+                    </table> 
+                  </div>
+              </div>       
+          </div>   
+          </div>
+
+          <hr>
+          <div class="row">
+              <div class="container" align="center">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                  <!-- <button type="submit" class="btn btn-primary">บันทึก</button> -->
+                  <button type="button" class="btn btn-primary " id="btnAdd" onclick="addDescriptionColumn()"><i class="fas fa-plus-circle"></i> บันทึก</button>
+                  <button type="button" class="btn btn-warning " style="display: none;" id="btnEdit" onclick="addDescriptionColumn()"><i class="fas fa-edit"></i> แก้ไข</button>
+              </div>
+              <br>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+  $(document).ready(function () {
+    Getcolumnlist()
+  });
+
+  function Getcolumnlist() {
+
+    var table_name = "{{tbname}}"
+    $.ajax({
+      type: 'post',
+      url: "{{pathurl}}/get_column_list",
+      dataType: "json",
+      data: { table_name: table_name, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+      beforeSend: function () {
+        $("#loader").show();
+        $("#div_table_list").hide();
+
+      },
+      success: function (context) {
+        $("#div_table_list").show();
+
+        // var table = $('#table_list').DataTable();
+        // table.destroy();
+
+        if ($.fn.dataTable.isDataTable('#table_list')) {
+          // alert("datatable")
+          table_list = $('#table_list').DataTable();
+          table_list.destroy();
+
+        }
+
+
+        $('#table_list thead').html("");
+        let head = '<tr>';
+        head += '<th class="text-center">ชื่อฟิลด์ จาก HIS_VIEW</th>'
+        head += '<th class="text-center">ชนิดข้อมูล</th>'
+        head += '<th class="text-center">คำอธิบายจาก HIS_VIEW</th>'
+        head += '<th class="text-center">คำอธิบาย (แสดงผล)</th>'
+        head += '<th class="text-center">หมายเหตุ</th>'
+        head += '<th class="text-center">Data Dictionary</th>'
+        head += '</tr>'
+        $('#table_list thead').append(head);
+
+
+        $('#table_list tbody').html("");
+
+        //   console.log(context)
+        //   alert(context.datas[0].patient_cid)
+
+        for (let i = 0; i < context.datas.length; i++) {
+          let fila = '<tr>';
+          // fila += '<td>' + (i+1)+ '</td>';
+          if (context.datas[i].field_viewhis) {
+            fila += '<td>' + context.datas[i].field_viewhis + '</td>';
+          }
+          else {
+            fila += '<td></td>';
+          }
+
+          if (context.datas[i].field_datatype) {
+            fila += '<td class="text-center">' + context.datas[i].field_datatype + '</td>';
+          }
+          else {
+            fila += '<td></td>';
+          }
+
+          if (context.datas[i].field_description) {
+            fila += '<td class="text-center">' + context.datas[i].field_description + '</td>';
+          }
+          else {
+            fila += '<td></td>';
+          }
+
+          if (context.datas[i].field_description_show) {
+            fila += `<td>` + context.datas[i].field_description_show + `<a href="#" onclick="GetDescription('{{tbname}}','` + context.datas[i].field_viewhis + `','` + context.datas[i].field_description_show + `')"> <i class="fas fa-edit"></i></a></td>`;
+          }
+          else {
+            fila += `<td class="text-center"><a onclick="GetDescription('{{tbname}}','` + context.datas[i].field_viewhis + `','` + context.datas[i].field_description_show + `')" class="btn btn-primary"><i class="fas fa-plus-circle"></i> Description</a></td>`;
+          }
+
+          if (context.datas[i].field_note) {
+            fila += '<td class="text-center">' + context.datas[i].field_note + '</td>';
+          }
+          else {
+            fila += '<td></td>';
+          }
+
+          if (context.datas[i].field_data_dictionary) {
+            fila += '<td class="text-center">' + context.datas[i].field_data_dictionary + '</td>';
+          }
+          else {
+            fila += '<td></td>';
+          }
+
+          fila += '</tr>';
+          $('#table_list tbody').append(fila);
+          // console.log(fila)
+        }
+
+        $('#table_list').DataTable({
+          stateSave: true,
+          "oLanguage": {
+            "sLengthMenu": "แสดง _MENU_ รายการ ต่อหน้า",
+            "sZeroRecords": "ไม่เจอข้อมูลที่ค้นหา",
+            "sInfo": "แสดง _START_ ถึง _END_ ของ _TOTAL_ รายการ",
+            "sInfoEmpty": "แสดง 0 ถึง 0 ของ 0 รายการ",
+            "sInfoFiltered": "(จากรายการทั้งหมด _MAX_ รายการ)",
+            "sSearch": "ค้นหา :",
+            "oPaginate": {
+              "sPrevious": "ย้อนกลับ",
+              "sNext": "ถัดไป"
+            }
+          },
+          // "displayLength": 100,
+          // "paging": false,
+          // dom: 'Bfrtip',
+          // buttons: [
+          //   {
+          //     extend: 'print',
+          //     // exportOptions: {
+          //     //   columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+          //     // },
+          //     text: 'พิมพ์',
+          //     title: 'Table list',
+          //     // messageTop: 'ข้อมูลผลตรวจ' + result,
+          //     customize: function (win) {
+          //       $(win.document.messageTop).css('text-align', 'center');
+          //       $(win.document.messageTop).css('font-size', '16px');
+          //       $(win.document.messageTop).css('font-weightbold', 'bold');
+          //       $(win.document.body).css('text-align', 'center');
+          //       //$(win.document.body).css( 'font-size', '9px' );
+          //       $(win.document.body).find('table')
+          //         .addClass('compact')
+          //         .css('font-size', 'inherit');
+          //     }
+          //   },
+          //   {
+          //     extend: 'excel',
+          //     // exportOptions: {
+          //     //   columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+          //     // },
+          //     title: 'Table List',
+          //   }
+          // ]
+
+        });
+        $("#loader").hide();
+
+      },
+      error: function (response) {
+        alert(response);
+      }
+    })
+
+  }
+
+  function GetDescription(table_name,field_name,description) {
+    // alert(table_name)
+    $('#field_name_des').text(field_name);
+    $('#his_table').val(table_name);
+    $('#field_name').val(field_name);
+    if (description == 'undefined' || description == 'null'){
+      $('#description').val(""); 
+    }
+    else{
+      $('#description').val(description);
+    }
+    $('#descriptionModal').modal({
+      show: true,
+      // keyboard: false,
+      // backdrop: 'static'
+    });
+  }
+
+  function addDescriptionColumn() {
+    var description = $("#description").val()
+    var his_table = $("#his_table").val()
+    var field_name = $("#field_name").val()
+
+    swal({
+      title: "ต้องการบันทึกหรือไม่",
+      icon: 'info',
+      showCancelButton: true,
+      buttons: ['ยกเลิก', 'ยืนยัน'],
+      dangerMode: true,
+    })
+      .then((Comfirm) => {
+        if (Comfirm) {
+          $.ajax({
+            url: "{{pathurl}}/addDescriptionColumn",
+            method: "POST",
+            data: { his_table: his_table,description: description,field_name: field_name, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            success: function (context) {
+              console.log("response", context);
+              if (Object.keys(context)) {
+
+                swal({
+                  icon: 'success',
+                  title: 'บันทึกสำเร็จ',
+                  showConfirmButton: false,
+                  timer: 1000
+                }).then(function () {
+                  Getcolumnlist();
+                  $('#descriptionModal').modal('toggle');
+                });
+
+              }
+              else {
+                swal({
+                  title: "บันทึกล้มเหลว",
+                  icon: "info",
+                  button: "ตกลง",
+                });
+              }
+            },
+
+          });
+        }
+        else {
+          return false;
+        }
+
+      });
+  }
+</script>
+<!-- </html> -->
+{% endblock %}
