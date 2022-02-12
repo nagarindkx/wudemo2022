@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block content %}
+
+    <div class="alert alert-success m-3" role="alert">
+      <h4 class="text-center">บันทึกสำเร็จ</h4>
+      <h4 class="text-center">Data successfully saved</h4>
+      <!-- <h6 class="pt-2 text-center"><b>
+        กรุณารอแจ้งเตือนให้กรอกแบบเก็บข้อมูลอาการข้างเคียงหลังจากได้รับวัคซีนใน Line
+      </b></h6> -->
+      {% if messages %}
+          {% for message in messages %}
+          <h6 class="pt-2 text-center"><b>
+            {{ message }}
+          </b></h6>
+          {% endfor %}
+      {% endif %}
+    </div>
+
+{% endblock %}

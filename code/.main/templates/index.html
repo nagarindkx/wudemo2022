@@ -1,0 +1,336 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<!-- <h1 align="center">Schema Searcher</h1> -->
+<br>
+<!-- <form action="/view_list" method="post"> -->
+{% csrf_token %}
+<div class="input-group mb-3">
+  <input list="fulltext" value="{{request.session.fulltext}}" name="name_fulltext" id="id_fulltext" class="form-control"
+    onchange="highlight()">
+  <datalist id="fulltext">
+    {% for rows in fulltext %}
+    <option class="class-highlight" value="{{rows.field_viewhis}}"><span class='highlight'>{{rows.fulltexts}}</span>
+    </option>
+    {% endfor %}
+  </datalist>
+  <div class="input-group-append">
+    <!-- <input type="submit" class="btn btn-info" value="ค้นหา"> -->
+    <a onclick="Gettablelist()" class="btn btn-info">ค้นหา</a>
+  </div>
+</div>
+
+<!-- </form> -->
+
+<div class="card shadow mb-3">
+  <div class="card-body">
+    <center>
+      <div id='loader' style='display: none;width: 300px;' class="my-3">
+        <div class="spinner-grow text-primary" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-secondary" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-success" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-danger" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-warning" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <div class="spinner-grow text-info" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </div>
+    </center>
+
+
+    <div class="table-responsive" id="div_table_list">
+      <table id="table_list" class="display">
+        <thead>
+
+        </thead>
+        <tbody>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+<div class="modal fade" id="descriptionModal" tabindex="-1" role="dialog" aria-labelledby="descriptionModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="descriptionModalLabel">Description (<span class="fw-bold"
+            id="table_name_des"></span>)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <input type="hidden" id="his_table" name="his_table">
+          <div class="form-group" id='form_email'>
+            <label class="col-form-label">คำอธิบาย :</label>
+            <!-- <input type="text" class="form-control" id="description" name="description"> -->
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+          </div>
+
+          <hr>
+          <div class="row">
+            <div class="container" align="center">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+              <!-- <button type="submit" class="btn btn-primary">บันทึก</button> -->
+              <button type="button" class="btn btn-primary " id="btnAdd" onclick="addDescriptionTable()"><i
+                  class="fas fa-plus-circle"></i> บันทึก</button>
+              <button type="button" class="btn btn-warning " style="display: none;" id="btnEdit"
+                onclick="addShare()"><i class="fas fa-edit"></i> แก้ไข</button>
+            </div>
+            <br>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .highlight {
+    background-color: yellow;
+  }
+</style>
+
+<script>
+  function highlight() {
+
+
+    var inputText = document.getElementsByClassName("class-highlight");
+    var text = document.getElementById("id_fulltext").value;
+    console.log(text)
+    // var innerHTML = inputText.innerHTML;
+
+    // innerHTML = innerHTML.replace(text,"<span class='highlight'>" + text + "</span>");
+    // innerHTML = innerHTML.replace(text,"<span class='highlight'>" + text + "</span>");
+
+    // inputText.innerHTML = innerHTML;
+
+    // console.log(inputText.innerHTML)
+
+    // for (var i = 0; i < inputText.length; i++) {
+
+    //     inputText[i].innerHTML =  inputText[i].innerHTML.replace(text,"<span class='highlight'>" + text + "</span>");
+    //     console.log(inputText[i].innerHTML)
+    // }
+    //     console.log(inputText.innerHTML)
+  }
+
+  $(document).ready(function () {
+    Gettablelist()
+  });
+
+  function Gettablelist() {
+
+    fulltext = $('#id_fulltext').val();
+    $.ajax({
+      type: 'post',
+      url: "{{pathurl}}/get_table_list",
+      dataType: "json",
+      data: { name_fulltext: fulltext, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+      beforeSend: function () {
+        $("#loader").show();
+        $("#div_table_list").hide();
+
+      },
+      success: function (context) {
+        $("#div_table_list").show();
+
+        // var table = $('#table_list').DataTable();
+        // table.destroy();
+
+        if ($.fn.dataTable.isDataTable('#table_list')) {
+          // alert("datatable")
+          table_list = $('#table_list').DataTable();
+          table_list.destroy();
+
+        }
+
+
+        $('#table_list thead').html("");
+        let head = '<tr>';
+        head += '<th>TABLE NAME</th>'
+        head += '<th class="text-center">คำอธิบายจาก HIS_VIEW</th>'
+        head += '<th class="text-center">คำอธิบายที่แสดงผล</th>'
+        head += '<th class="text-center">#</th>'
+        head += '</tr>'
+        $('#table_list thead').append(head);
+
+
+        $('#table_list tbody').html("");
+
+        //   console.log(context)
+        //   alert(context.datas[0].patient_cid)
+
+        for (let i = 0; i < context.datas.length; i++) {
+          let fila = '<tr>';
+          // fila += '<td>' + (i+1)+ '</td>';
+          fila += '<td><a href="{{pathurl}}/datatable/' + context.datas[i].table_name + '" class="text-dark">' + context.datas[i].table_name + '</a></td>';
+          if (context.datas[i].table_description_hisview) {
+            fila += '<td class="text-center">' + context.datas[i].table_description_hisview + '</td>';
+          }
+          else {
+            fila += '<td></td>';
+          }
+
+          // alert(context.datas[i].table_description_dida)
+          if (context.datas[i].table_description_dida) {
+            fila += `<td>` + context.datas[i].table_description_dida + `<a href="#" onclick="GetDescription('` + context.datas[i].table_name + `','` + context.datas[i].table_description_dida + `')"> <i class="fas fa-edit"></i></a></td>`;
+          }
+          else {
+            fila += `<td class="text-center"><a onclick="GetDescription('` + context.datas[i].table_name + `','` + context.datas[i].table_description_dida + `')" class="btn btn-primary"><i class="fas fa-plus-circle"></i> Description</a></td>`;
+          }
+
+          if (context.datas[i].field_viewhis) {
+            fila += '<td class="text-center">' + context.datas[i].field_viewhis + '</td>';
+          }
+          else {
+            fila += '<td></td>';
+          }
+
+          fila += '</tr>';
+          $('#table_list tbody').append(fila);
+          // console.log(fila)
+        }
+
+        $('#table_list').DataTable({
+          stateSave: true,
+          "oLanguage": {
+            "sLengthMenu": "แสดง _MENU_ รายการ ต่อหน้า",
+            "sZeroRecords": "ไม่เจอข้อมูลที่ค้นหา",
+            "sInfo": "แสดง _START_ ถึง _END_ ของ _TOTAL_ รายการ",
+            "sInfoEmpty": "แสดง 0 ถึง 0 ของ 0 รายการ",
+            "sInfoFiltered": "(จากรายการทั้งหมด _MAX_ รายการ)",
+            "sSearch": "ค้นหา :",
+            "oPaginate": {
+              "sPrevious": "ย้อนกลับ",
+              "sNext": "ถัดไป"
+            }
+          },
+          // "displayLength": 100,
+          // "paging": false,
+          // dom: 'Bfrtip',
+          // buttons: [
+          //   {
+          //     extend: 'print',
+          //     // exportOptions: {
+          //     //   columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+          //     // },
+          //     text: 'พิมพ์',
+          //     title: 'Table list',
+          //     // messageTop: 'ข้อมูลผลตรวจ' + result,
+          //     customize: function (win) {
+          //       $(win.document.messageTop).css('text-align', 'center');
+          //       $(win.document.messageTop).css('font-size', '16px');
+          //       $(win.document.messageTop).css('font-weightbold', 'bold');
+          //       $(win.document.body).css('text-align', 'center');
+          //       //$(win.document.body).css( 'font-size', '9px' );
+          //       $(win.document.body).find('table')
+          //         .addClass('compact')
+          //         .css('font-size', 'inherit');
+          //     }
+          //   },
+          //   {
+          //     extend: 'excel',
+          //     // exportOptions: {
+          //     //   columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+          //     // },
+          //     title: 'Table List',
+          //   }
+          // ]
+
+        });
+        $("#loader").hide();
+
+      },
+      error: function (response) {
+        alert(response);
+      }
+    })
+
+  }
+
+  function GetDescription(table_name,table_description_dida) {
+    // alert(table_name)
+    $('#table_name_des').text(table_name);
+    $('#his_table').val(table_name);
+    if (table_description_dida == 'undefined' || table_description_dida == 'null'){
+      $('#description').val(""); 
+    }
+    else{
+      $('#description').val(table_description_dida);
+    }
+    $('#descriptionModal').modal({
+      show: true,
+      // keyboard: false,
+      // backdrop: 'static'
+    });
+  }
+
+  function addDescriptionTable() {
+    var description = $("#description").val()
+    var his_table = $("#his_table").val()
+
+    swal({
+      title: "ต้องการบันทึกหรือไม่",
+      icon: 'info',
+      showCancelButton: true,
+      buttons: ['ยกเลิก', 'ยืนยัน'],
+      dangerMode: true,
+    })
+      .then((Comfirm) => {
+        if (Comfirm) {
+          $.ajax({
+            url: "{{pathurl}}/addDescriptionTable",
+            method: "POST",
+            data: { his_table: his_table,description: description, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            success: function (context) {
+              console.log("response", context);
+              if (Object.keys(context)) {
+
+                swal({
+                  icon: 'success',
+                  title: 'บันทึกสำเร็จ',
+                  showConfirmButton: false,
+                  timer: 1000
+                }).then(function () {
+                  Gettablelist();
+                  $('#descriptionModal').modal('toggle');
+                });
+
+              }
+              else {
+                swal({
+                  title: "บันทึกล้มเหลว",
+                  icon: "info",
+                  button: "ตกลง",
+                });
+              }
+            },
+
+          });
+        }
+        else {
+          return false;
+        }
+
+      });
+  }
+</script>
+
+{% endblock %}
